@@ -1,0 +1,37 @@
+<!-- views/pages/index.ejs -->
+<!DOCTYPE html>
+<!--
+    Jimmy Martini 04-10-2021
+    Fichier: index.ejs
+    Page d'accueil du Lab 7.
+    Affiche un formulaire de connection. Demande le nom d'utilisateur et le mot de passe à utiliser pour accèder à la base de donnée.
+-->
+
+<html lang="fr-CA">
+  <head>
+    <%- include('../partials/head') %>
+  </head>
+  <body class="container">
+    <header>
+      <%- include('../partials/header') %>
+    </header>
+    <main>
+      <div class="jumbotron">
+        <% if (messageErreur != "") { %>
+          <span style="color:red"> <%= messageErreur %> </span><br>
+          <span style="color:red;">Veuillez reéssaillez ou contacter un administrateur si vous avez des questions.</span>
+        <% } %>
+        <form method="post" action="/accueil">
+          <label for="username">Nom d'utilisateur :</label><br>
+          <input type="text" name="username" required><br>
+          <label for="password">Mot de passe :</label><br>
+          <input type="text" name="password" required><br>
+          <input type="submit" value="Se Connecter">
+        </form>
+      </div>
+    </main>
+    <footer>
+      <%- include('../partials/footer') %>
+    </footer>
+  </body>
+</html>

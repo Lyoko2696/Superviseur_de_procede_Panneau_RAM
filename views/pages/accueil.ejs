@@ -1,0 +1,94 @@
+<!-- views/pages/accueil.ejs -->
+<!DOCTYPE html>
+<!--
+    Jimmy Martini 04-10-2021
+    Fichier: accueil.ejs
+    Page qui affiche le message d'accueil, le ou les formulaires et les données pour chaque utilisateur selon le niveau de droit.
+    Affiche le message d'accueil associé à l'utilisateur vérifié.
+-->
+
+<html lang="fr-CA">
+  <head>
+    <%- include('../partials/head') %>
+  </head>
+  <body class="container">
+    <header>
+      <%- include('../partials/loginHeader') %>
+    </header> 
+    <main>
+      <div class="jumbotron">
+        <h2><%= myDb[user-1].texteAccueil %></h2>
+        <!-- Affichage dépendant du niveau de droit de l'utilisateur présentement connecté. -->
+        <% if (myDb[user-1].nivDroit == 1) { %>
+          <form method="post" action="/update">
+            <label for="data">Nouveau message d'accueil :</label><br>
+            <input type="text" name="data" required><br>
+            <input type="hidden" name="target" value="message">
+            <input type="hidden" name="userId" value="<%= user %>">
+            <input type="submit" value="Changer le message">
+          </form>
+        <% } else if (myDb[user-1].nivDroit >= 2) { %>
+          <table class="table">
+            <tr>
+              <td>
+                <form method="post" action="/update">
+                  <label for="data">Nouveau message d'accueil :</label><br>
+                  <input type="text" name="data" required><br>
+                  <input type="hidden" name="target" value="message">
+                  <input type="hidden" name="userId" value="<%= user %>">
+                  <input type="submit" value="Changer le message">
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/update">
+                  <label for="data">Nouveau mot de passe :</label><br>
+                  <input type="text" name="data" required><br>
+                  <input type="hidden" name="target" value="password">
+                  <input type="hidden" name="userId" value="<%= user %>">
+                  <input type="submit" value="Changer votre mot de passe">
+                </form>
+              </td>
+            </tr>
+          </table>
+        <% } %>
+        <% if (myDb[user-1].nivDroit == 3) { %>
+          <br>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Utilisateurs</th>
+                <th>Mots de Passe</th>
+                <th>Messages d'accueil</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><%= myDb[0].login %></td>
+                <td><%= myDb[0].password %></td>
+                <td><%= myDb[0].texteAccueil %></td>
+              </tr>
+              <tr>
+                <td><%= myDb[1].login %></td>
+                <td><%= myDb[1].password %></td>
+                <td><%= myDb[1].texteAccueil %></td>
+              </tr>
+              <tr>
+                <td><%= myDb[2].login %></td>
+                <td><%= myDb[2].password %></td>
+                <td><%= myDb[2].texteAccueil %></td>
+              </tr>
+              <tr>
+                <td><%= myDb[3].login %></td>
+                <td><%= myDb[3].password %></td>
+                <td><%= myDb[3].texteAccueil %></td>
+              </tr>
+            </tbody>
+          </table> 
+        <% } %>
+      </div>
+    </main>
+    <footer>
+      <%- include('../partials/footer') %>
+    </footer>
+  </body>
+</html>

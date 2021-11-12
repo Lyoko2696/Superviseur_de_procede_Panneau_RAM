@@ -1,0 +1,61 @@
+<!-- views/pages/contact.ejs -->
+<!DOCTYPE html>
+<!--
+    Jimmy Martini 04-10-2021
+    Fichier: contact.ejs
+    Page d'information de contacte.
+    Affiche les information necessaire pour contacter le créateur du site.
+-->
+<html lang="fr-CA">
+
+<head>
+    <%- include('../partials/head') %>
+</head>
+
+<body class="container">
+    <header>
+        <!-- Affiche une header différent si un utilisateur est connecté -->
+        <% if ((user != "") && (typeof user != 'undefined')) { %>
+            <%- include('../partials/loginHeader') %>
+        <% } else { %>
+            <%- include('../partials/header') %>
+        <% } %>
+    </header>
+    <main>
+        <div class="jumbotron">
+            <table style="width:100%;margin-left:auto;margin-right:auto" class="table table-striped table table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center" colspan="5">Informations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Adresse Postale</th>
+                        <th>Courriel</th>
+                        <th>Téléphone</th>
+                    </tr>
+                    <tr>
+                        <td>Jimmy</td>
+                        <td>Martini</td>
+                        <td>J7C 1R3</td>
+                        <td>martinijimmy90@gmail.com</td>
+                        <td>(514) 742 0215</td>
+                    </tr>
+                </tbody>
+            </table>
+            <% if ((user != "") && (typeof user != 'undefined')) { %>
+                <a href="/logout">Déconnection</a>
+            <% } else { %>
+                <a href="/">Retour à la page d'accueil.</a>
+            <% } %>
+        </div>
+    </main>
+    <footer>
+        <%- include('../partials/footer') %>
+    </footer>
+</body>
+
+</html>

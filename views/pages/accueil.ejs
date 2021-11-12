@@ -20,6 +20,9 @@
         <h2><%= myDb[user-1].texteAccueil %></h2>
         <!-- Affichage dépendant du niveau de droit de l'utilisateur présentement connecté. -->
         <% if (myDb[user-1].nivDroit == 1) { %>
+          <% if (erreurTarget == "message") { %>
+            <span style="color:red"> <%= erreurMessage %> </span><br>
+          <% } %>
           <form method="post" action="/update">
             <label for="data">Nouveau message d'accueil :</label><br>
             <input type="text" name="data" required><br>
@@ -31,6 +34,9 @@
           <table class="table">
             <tr>
               <td>
+                <% if (erreurTarget == "message") { %>
+                  <span style="color:red"> <%= erreurMessage %> </span><br>
+                <% } %>
                 <form method="post" action="/update">
                   <label for="data">Nouveau message d'accueil :</label><br>
                   <input type="text" name="data" required><br>
@@ -40,6 +46,9 @@
                 </form>
               </td>
               <td>
+                <% if (erreurTarget == "password") { %>
+                  <span style="color:red"> <%= erreurMessage %> </span><br>
+                <% } %>
                 <form method="post" action="/update">
                   <label for="data">Nouveau mot de passe :</label><br>
                   <input type="text" name="data" required><br>

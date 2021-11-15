@@ -7,14 +7,18 @@
  */
 
 var createError = require('http-errors');
-var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var express = require('express');
+var app = express();
+//var serveur = app.listen(3000);
+//var io = require('socket.io')(serveur);
+var mqtt = require('mqtt');
+
 
 var indexRouter = require('./routes/index');
 
-var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -43,5 +47,10 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// Quand un client se connecte, on le note dans la console
+//io.sockets.on('connection', function (socket) {
+    //console.log('Un client est connecté !');
+//});
 
 module.exports = app;

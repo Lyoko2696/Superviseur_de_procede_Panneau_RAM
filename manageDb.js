@@ -12,13 +12,13 @@ var connection = mysql.createConnection({
     host     : 'localhost',
     user     : 'root',
     password : 'root',
-    database : 'lab7'
+    database : 'panneau_ram'
 });
 
 /* Initialise la connection à la banque de donnée. */
 connection.connect(function (err) {
     if (err) throw err;
-    console.log('Vous êtes connecté à votre BDD...');
+    console.log('Vous êtes connecté à votre BDD.');
 });
 
 /* Exporte la variable connection pour qu'elle puisse être utilisé dans les autres pages. */

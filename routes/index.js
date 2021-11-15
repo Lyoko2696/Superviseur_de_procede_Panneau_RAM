@@ -9,6 +9,7 @@
 var express = require('express');
 var router = express.Router();
 var connection = require('../manageDb');
+var { io } = require('../socketApi');
 
 /* Variable globales */
 var BDD;
@@ -58,7 +59,7 @@ router.post('/accueil', function(req, res, next) {
     }
   ).then(
     async function(userId) {
-      var pwdCheck = await checkUserPassword(BDD, userId-1, password);
+      var pwdCheck = await checkUserPassword(BDD, userId, password);
       return pwdCheck;
     },
     function(error) {
@@ -130,7 +131,7 @@ router.post('/update', function(req, res, next) {
 /* et retourne un objet promesse avec le id de l'utilisateur s'il existe ou un message d'erreur si l'utilisateur n'existe pas. */
 function checkUser(db, user) {
   for (var i = 0;i <= (db.length-1); i++) {
-      if ( (db[i].login) == user) {
+      if ( (db[i].username) == user) {
         return Promise.resolve(db[i].id);
       }
   }
@@ -140,8 +141,8 @@ function checkUser(db, user) {
 /* Fontion qui compare le mot de passe donnée à celui associé à l'utilisateur spécifié */
 /* et retourne un objet promesse avec le id de l'utilisateur confirmé ou un message d'erreur si le mot de passe n'est pas bon. */
 function checkUserPassword(db, id, password) {
-  if ( (db[id].password) == password) {
-    return Promise.resolve(db[id].id);
+  if ( (db[id-1].password) == password) {
+    return Promise.resolve(db[id-1].id);
   } else {
     return Promise.reject("2 checkUserPassword Erreur: Mot de passe incorrecte!");
   }
@@ -149,7 +150,7 @@ function checkUserPassword(db, id, password) {
 
 /* Fonction qui intéroge toute la banque de donnée et retourne un objet promesse avec les données ou un message d'erreur une fois celle-çi terminé. */
 async function readDb() {
-  var querystring = 'SELECT * FROM login';
+  var querystring = 'SELECT * FROM users';
   /* Création de la promesse qui confirmera si le requète SQL est teminé ou s'il y a eu un erreur. */
     var readPromise = await new Promise((resolve, reject) => {
       connection.query(querystring, function(err, rows, fields) {
@@ -168,22 +169,15 @@ async function readDb() {
 /* et retourne un objet promesse avec le résultat ou un message d'erreur une fois celle-çi temriné.  */
 async function modifyDb(data, target, userId) {
   /* Construction de la requète selon le type de donnée à modifier. */
-  var querystring = 'UPDATE login SET ';
-  /* Changement de target pour la construction du console.log dans updateDb(). */
-  if (target == "message") {
-    querystring += "texteAccueil = '"+data+"' ";
-    target = "Texte d'accueil : ";
-  } else if (target == "password"){
-    querystring += "password = '"+data+"' ";
-    target = "MdP : ";
-  }
+  var querystring = 'UPDATE users SET ';
+  querystring += target+" = '"+data+"' ";
   querystring += "WHERE id = "+userId+";";
 
   /* Création de la promesse qui confirmera si le requète SQL est teminé ou s'il y a eu un erreur. */
   var updatePromise = await new Promise((resolve, reject) => {
     connection.query(querystring, async function(err, rows, fields) {
       if (!err) {
-        console.log("Log modifyDb(): Requète UPDATE "+username+" => "+target+data+" OK!");
+        console.log("Log modifyDb(): Requète UPDATE "+username+" => "+target+" : "+data+" OK!");
         resolve();
       } else {
         reject("4 modifyDb() "+err);

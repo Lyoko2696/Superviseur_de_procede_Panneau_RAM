@@ -12,9 +12,6 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var express = require('express');
 var app = express();
-//var serveur = app.listen(3000);
-//var io = require('socket.io')(serveur);
-var mqtt = require('mqtt');
 
 
 var indexRouter = require('./routes/index');
@@ -47,10 +44,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-// Quand un client se connecte, on le note dans la console
-//io.sockets.on('connection', function (socket) {
-    //console.log('Un client est connecté !');
-//});
 
 module.exports = app;

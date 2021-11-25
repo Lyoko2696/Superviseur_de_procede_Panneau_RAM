@@ -10,6 +10,11 @@
 <html lang="fr-CA">
   <head>
     <%- include('../partials/head') %>
+    <script>
+      socket.on('message',function(message) {
+        alert('Le serveur a un message pour vous : ' + message);
+      });
+    </script>
   </head>
   <body class="container">
     <header>

@@ -10,6 +10,20 @@
 <html lang="fr-CA">
   <head>
     <%- include('../partials/head') %>
+    <script>
+      jQuery(function($) {
+        socket.on('poids', function (val) {
+          $('#poids').text(val);
+        });
+        socket.on('tare', function (val) {
+          $('#tare').text(val);
+        });
+        socket.on('unite', function (val) {
+          $('#unite1').text(val);
+          $('#unite2').text(val);
+        });
+      });
+    </script>
   </head>
   <body class="container">
     <header>
@@ -17,7 +31,30 @@
     </header> 
     <main>
       <div class="jumbotron">
-        BALANCE
+        <table class="table">
+          <tr>
+            <td>
+              <span>Poids :</span>
+            </td>
+            <td>
+              <span id="poids"><%=poids%></span>
+            </td>
+            <td>
+              <span id="unite1"><%=unite%></span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span>Tare :</span>
+            </td>
+            <td>
+              <span id="tare"><%=tare%></span>
+            </td>
+            <td>
+              <span id="unite2"><%=unite%></span>
+            </td>
+          </tr>
+        </table>
       </div>
     </main>
     <footer>

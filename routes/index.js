@@ -14,15 +14,18 @@ var mqtt = require('mqtt');
 var adresseMqtt = "mqtt://172.17.15.103:1883";
 var client = mqtt.connect(adresseMqtt);
 
-/* Variable globales */
+
+  /* Variable globales */
+
+/* Banque de données des utilisateurs */
 var BDD;
+
+/* Information utile pour la session de l'utilisateur */
 var erreur = {target : "", message : ""};
-var eMessage = "";
-var eTarget = "";
 var login = {username : "", password : "", id : 0};
-var username = "";
-var password = "";
-var userId = 0;
+
+/* Valeurs reçus avec Mqtt */
+var balance = {poids: "0", tare: "0", unite: "lb"};
 
 /* GET Page par défault. Redirige vers /connection */
 router.get('/', function(req, res, next) {
@@ -58,7 +61,7 @@ router.get('/logout', function(req, res, next) {
 /* POST Page d'accueil de l'utilisateur. */
 router.post('/accueil', function(req, res, next) {
   // Met à jour BDD.
-  erreur.Target = req.body.eTarget;
+  erreur.target = req.body.eTarget;
   erreur.message = req.body.eMessage;
   if(login.username == "") {
     readDb().then(
@@ -89,7 +92,7 @@ router.post('/accueil', function(req, res, next) {
     ).then(
       function(val) {
         login.id = val;
-        console.log("LOG /accueil: Utilisateur '"+login,username+"' connecté");
+        console.log("LOG /accueil: Utilisateur '"+login.username+"' connecté");
         res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
         if(erreur.message != "") {
           erreur.message = "";
@@ -126,7 +129,7 @@ router.post('/accueil', function(req, res, next) {
       async function(myDb) {
         // Store le résultat de readDb dans la variable globale.
         BDD = myDb;
-        if (erruer.target == "erreur") {
+        if (erreur.target == "erreur") {
           throw("5 Erreur: Target mal/non définie");
         }
         res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
@@ -166,12 +169,12 @@ router.post('/accueil', function(req, res, next) {
 /* POST Mise à jour de la banque de donnée demander par l'utilisateur. */
 router.post('/update', function(req, res, next) {
   var data = req.body.data;
-  erreru.target = req.body.target;
+  erreur.target = req.body.target;
   login.id = req.body.userId;
   /* Requète UPDATE et redirection vers /accueil en POST (307). */
   modifyDb(data, erreur.target, login.id).then(
     function() {
-      if( erreru.target == "password") {
+      if( erreur.target == "password") {
         /* Mise à jour de mot de passe dans le serveur pour permettre la reconnection à la page /accueil. */
         login.password = data;
       }
@@ -197,7 +200,7 @@ router.post('/update', function(req, res, next) {
 
 /* POST Mise à jour de la banque de donnée demander par l'utilisateur. */
 router.post('/balance', function(req, res, next) {
-  res.render('./pages/balance', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
+  res.render('./pages/balance', { title: 'Balance', myDb: BDD, user: login.id, poids: balance.poids, tare: balance.tare, unite: balance.unite});
   if(erreur.message != "") {
     erreur.message = "";
   }
@@ -246,17 +249,17 @@ async function readDb() {
 
 /* Fonction qui fait la requète SQL qui met à jour (UPDATE) la donnée spécifié pour l'utilisateur spécifier */
 /* et retourne un objet promesse avec le résultat ou un message d'erreur une fois celle-çi temriné.  */
-async function modifyDb(data, target, id) {
+async function modifyDb(data, uTarget, id) {
   /* Construction de la requète selon le type de donnée à modifier. */
   var querystring = 'UPDATE users SET ';
-  querystring += target+" = '"+data+"' ";
+  querystring += uTarget+" = '"+data+"' ";
   querystring += "WHERE id = "+id+";";
 
   /* Création de la promesse qui confirmera si le requète SQL est teminé ou s'il y a eu un erreur. */
   var updatePromise = await new Promise((resolve, reject) => {
     connection.query(querystring, async function(err, rows, fields) {
       if (!err) {
-        console.log("LOG modifyDb(): Requète UPDATE "+username+" => "+target+" : '"+data+"' réussi");
+        console.log("LOG modifyDb(): Requète UPDATE "+login.username+" => "+uTarget+" : '"+data+"' réussi");
         resolve();
       } else {
         reject("4 modifyDb() "+err);
@@ -266,13 +269,18 @@ async function modifyDb(data, target, id) {
   return updatePromise;
 }
 
-/* Gestion des message Mqtt */
+
+/* Gestion des message Mqtt avec socket.io */
+
+/* Console.log des connections mqtt et socket.io */
 client.on('connect',function() {
   console.log("LOG Mqtt: Connecté à '" + adresseMqtt + "'");
 });
 
+/* Abonnement aux topics Mqtt */
 client.subscribe('RAM/+/etats/#');
 
+/* Vérification et réactions pour chacuns des messages Mqtt */
 client.on('message',function(topic,message) {
   var strTopic = topic.toString();
   var strMessage = message.toString();
@@ -304,10 +312,16 @@ client.on('message',function(topic,message) {
     }
   } else if(strTopic.includes("/balance/")) {
     if       (strTopic.includes("poids")) {
+      balance.poids = strMessage;
+      io.emit('poids', strMessage);
       console.log("LOG Mqtt poids: "+strMessage);
     } else if(strTopic.includes("tare")) {
+      balance.tare = strMessage;
+      io.emit('tare', strMessage);
       console.log("LOG Mqtt tare: "+strMessage);
     } else if(strTopic.includes("unite")) {
+      balance.unite = strMessage;
+      io.emit('unite', strMessage);
       console.log("LOG Mqtt unite: "+strMessage);
     }
   } else if(strTopic.includes("/melangeur/")) {

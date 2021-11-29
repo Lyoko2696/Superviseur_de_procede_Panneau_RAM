@@ -19,8 +19,7 @@
           $('#tare').text(val);
         });
         socket.on('unite', function (val) {
-          $('#unite1').text(val);
-          $('#unite2').text(val);
+          $('.unite').text(val);
         });
       });
     </script>
@@ -40,7 +39,7 @@
               <span id="poids"><%=poids%></span>
             </td>
             <td>
-              <span id="unite1"><%=unite%></span>
+              <span class="unite"><%=unite%></span>
             </td>
           </tr>
           <tr>
@@ -51,7 +50,7 @@
               <span id="tare"><%=tare%></span>
             </td>
             <td>
-              <span id="unite2"><%=unite%></span>
+              <span class="unite"><%=unite%></span>
             </td>
           </tr>
         </table>

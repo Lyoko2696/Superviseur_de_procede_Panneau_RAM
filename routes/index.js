@@ -59,6 +59,52 @@ router.get('/logout', function(req, res, next) {
   res.redirect("/connection");
 });
 
+/* GET Page d'informations de contacte. */
+router.get('/accueil', function(req, res, next) {
+  if (login.username != "") {
+    readDb().then(
+      async function(myDb) {
+        // Store le résultat de readDb dans la variable globale.
+        BDD = myDb;
+        if (erreur.target == "erreur") {
+          throw("5 Erreur: Target mal/non définie");
+        }
+        res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
+        if(erreur.message != "") {
+          erreur.message = "";
+        }
+        if(erreur.target != "") {
+          erreur.target = "";
+        }
+      },
+      function(error) {
+        throw(error);
+      }
+    ).catch(function (error) {
+      console.log("CATCH /accueil:");
+      console.log(error);
+  
+      /* Remise à zéro de la session et définition de message d'erreur à afficher sur la page selon le numéro d'erreur. */
+      if ( (error[0] == '1') || (error[0] == '2')) {
+        erreur.message = "Erreur: Nom d'utilisateur ou mot de passe incorrect!";
+      } else if (error[0] == '3') {
+        erreur.message = "Erreur: Probléme de lecture de la banque de donnée! Connection fermée.";
+      } else if (error[0] == '5') {
+        erreur.message = "Erreur inattendu dans /update. Connection fermée.";
+      } else {
+        erreur.message = "Erreur inattendu dans /accueil. Connection fermée.";
+      }
+      login.username = "";
+      login.password = "";
+      login.id = 0;
+      res.redirect('/connection');
+      }
+    );
+  } else {
+    res.redirect("/connection");
+  }
+});
+
 /* POST Page d'accueil de l'utilisateur. */
 router.post('/accueil', function(req, res, next) {
   // Met à jour BDD.
@@ -126,44 +172,7 @@ router.post('/accueil', function(req, res, next) {
       }
     );
   } else {
-    readDb().then(
-      async function(myDb) {
-        // Store le résultat de readDb dans la variable globale.
-        BDD = myDb;
-        if (erreur.target == "erreur") {
-          throw("5 Erreur: Target mal/non définie");
-        }
-        res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
-        if(erreur.message != "") {
-          erreur.message = "";
-        }
-        if(erreur.target != "") {
-          erreur.target = "";
-        }
-      },
-      function(error) {
-        throw(error);
-      }
-    ).catch(function (error) {
-      console.log("CATCH /accueil:");
-      console.log(error);
-  
-      /* Remise à zéro de la session et définition de message d'erreur à afficher sur la page selon le numéro d'erreur. */
-      if ( (error[0] == '1') || (error[0] == '2')) {
-        erreur.message = "Erreur: Nom d'utilisateur ou mot de passe incorrect!";
-      } else if (error[0] == '3') {
-        erreur.message = "Erreur: Probléme de lecture de la banque de donnée! Connection fermée.";
-      } else if (error[0] == '5') {
-        erreur.message = "Erreur inattendu dans /update. Connection fermée.";
-      } else {
-        erreur.message = "Erreur inattendu dans /accueil. Connection fermée.";
-      }
-      login.username = "";
-      login.password = "";
-      login.id = 0;
-      res.redirect('/connection');
-      }
-    );
+    res.redirect('/accueil');
   }
 });
 
@@ -179,7 +188,7 @@ router.post('/update', function(req, res, next) {
         /* Mise à jour de mot de passe dans le serveur pour permettre la reconnection à la page /accueil. */
         login.password = data;
       }
-      res.redirect(307, "/accueil");
+      res.redirect("/accueil");
     },
     function(error) {
       throw(error);
@@ -195,12 +204,12 @@ router.post('/update', function(req, res, next) {
     } else {
       erreur.target = "erreur";
     }
-    res.redirect(307,'/accueil');
+    res.redirect('/accueil');
   });
 });
 
-/* POST Mise à jour de la banque de donnée demander par l'utilisateur. */
-router.post('/balance', function(req, res, next) {
+/* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
+router.get('/balance', function(req, res, next) {
   res.render('./pages/balance', { title: 'Balance', myDb: BDD, user: login.id, poids: balance.poids, tare: balance.tare, unite: balance.unite});
   if(erreur.message != "") {
     erreur.message = "";
@@ -210,8 +219,8 @@ router.post('/balance', function(req, res, next) {
   }
 })
 
-/* POST Mise à jour de la banque de donnée demander par l'utilisateur. */
-router.post('/powermeter', function(req, res, next) {
+/* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
+router.get('/powermeter', function(req, res, next) {
   res.render('./pages/powermeter', { title: 'Powermeter', myDb: BDD, user: login.id, powermeter: powermeter});
   if(erreur.message != "") {
     erreur.message = "";

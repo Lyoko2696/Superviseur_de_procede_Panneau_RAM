@@ -17,22 +17,10 @@
         </div>
         <ul class="nav navbar-nav">
             <li><a href="/logout">Déconnecion</a></li>
-            <li><a href="javascript:void document.getElementById('accueilform').submit();">Accueil</a></li>
-            <li><a href="javascript:void document.getElementById('balanceform').submit();">Balance</a></li>
-            <li><a href="javascript:void document.getElementById('powermeterform').submit();">Powermeter</a></li>
+            <li><a href="/accueil">Accueil</a></li>
+            <li><a href="/balance">Balance</a></li>
+            <li><a href="/powermeter">Powermeter</a></li>
             <li><a href="/contact">Contact</a></li>
         </ul>
-        <form id="accueilform" action="/accueil" method="post">
-            <input type="hidden" name="eTarget" value="">
-            <input type="hidden" name="eMessage" value="">
-        </form>
-        <form id="balanceform" action="/balance" method="post">
-            <input type="hidden" name="eTarget" value="">
-            <input type="hidden" name="eMessage" value="">
-        </form>
-        <form id="powermeterform" action="/powermeter" method="post">
-            <input type="hidden" name="eTarget" value="">
-            <input type="hidden" name="eMessage" value="">
-        </form>
     </div>
 </nav>

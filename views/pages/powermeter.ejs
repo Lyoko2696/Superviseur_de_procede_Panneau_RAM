@@ -1,0 +1,83 @@
+<!-- views/pages/powermeter.ejs -->
+<!DOCTYPE html>
+<!--
+    Jimmy Martini 04-10-2021
+    Fichier: powermeter.ejs
+    Page qui affiche les information du powermeter.
+    Affiche les informations du powermeter et gère l'alarme qui lui est associé.
+-->
+
+<html lang="fr-CA">
+  <head>
+    <%- include('../partials/head') %>
+    <script>
+      jQuery(function($) {
+        socket.on('VAN', function (val) {
+          $('#VAN').text(val);
+        });
+        socket.on('VBN', function (val) {
+          $('#VBN').text(val);
+        });
+        socket.on('VAB', function (val) {
+          $('#VAB').text(val);
+        });
+        socket.on('IA', function (val) {
+          $('#IA').text(val);
+        });
+        socket.on('IB', function (val) {
+          $('#IB').text(val);
+        });
+        socket.on('KW', function (val) {
+          $('#KW').text(val);
+        });
+        socket.on('KWH', function (val) {
+          $('#KWH').text(val);
+        });
+        socket.on('FP', function (val) {
+          $('#FP').text(val);
+        });
+      });
+    </script>
+  </head>
+  <body class="container">
+    <header>
+      <%- include('../partials/loginHeader') %>
+    </header> 
+    <main>
+      <div class="jumbotron">
+        <table class="table">
+          <% for (key of Object.keys(powermeter)) { %>
+            <tr>
+              <td>
+                <span><%=key%>  :</span>
+              </td>
+              <td>
+                <span id="<%=key%>"><%=powermeter[key]%></span>
+              </td>
+              <td>
+                <span>
+                  <% if (key=="VAN" || key=="VBN" || key=="VAB") { %>
+                    V
+                  <%} else if (key=="IA" || key=="IB") { %>
+                    A
+                  <%} else if (key=="KW") { %>
+                    KW
+                  <%} else if (key=="KWH") { %>
+                    KWh
+                  <%} else if (key=="FP") { %>
+                    %
+                  <%} else { %>
+                    Erreur
+                  <% } %>
+                </span>
+              </td>
+            </tr>
+          <% }; %>
+        </table>
+      </div>
+    </main>
+    <footer>
+      <%- include('../partials/footer') %>
+    </footer>
+  </body>
+</html>

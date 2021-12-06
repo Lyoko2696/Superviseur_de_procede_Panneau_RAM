@@ -26,6 +26,7 @@ var login = {username : "", password : "", id : 0};
 
 /* Valeurs reçus avec Mqtt */
 var balance = {poids: "0", tare: "0", unite: "lb"};
+var powermeter = {VAN: "0", VBN: "0", VAB: "0", IA: "0", IB: "0", KW: "0", KWH: "0", FP: "0"};
 
 /* GET Page par défault. Redirige vers /connection */
 router.get('/', function(req, res, next) {
@@ -209,6 +210,17 @@ router.post('/balance', function(req, res, next) {
   }
 })
 
+/* POST Mise à jour de la banque de donnée demander par l'utilisateur. */
+router.post('/powermeter', function(req, res, next) {
+  res.render('./pages/powermeter', { title: 'Powermeter', myDb: BDD, user: login.id, powermeter: powermeter});
+  if(erreur.message != "") {
+    erreur.message = "";
+  }
+  if(erreur.target != "") {
+    erreur.target = "";
+  }
+})
+
 /* Fontion qui compare le nom d'utilisateur donnée à ceux contenue dans la banques de donnée */
 /* et retourne un objet promesse avec le id de l'utilisateur s'il existe ou un message d'erreur si l'utilisateur n'existe pas. */
 function checkUser(db, user) {
@@ -324,27 +336,41 @@ client.on('message',function(topic,message) {
       io.emit('unite', strMessage);
       console.log("LOG Mqtt unite: "+strMessage);
     }
-  } else if(strTopic.includes("/melangeur/")) {
-    if       (strTopic.includes("recetteStatut")) {
+  } else if(strTopic.includes("/melangeur/recetteStatut")) {
     
-    }
   } else if(strTopic.includes("/powermeter/")) {
-    if       (strTopic.includes("Van")) {
-    
-    } else if(strTopic.includes("Vbn")) {
-      
-    } else if(strTopic.includes("Vab")) {
-      
-    } else if(strTopic.includes("Ia")) {
-      
-    } else if(strTopic.includes("Ib")) {
-      
+    if       (strTopic.includes("VAN")) {
+      powermeter.VAB = strMessage;
+      io.emit('VAN', strMessage);
+      console.log("LOG Mqtt VAN: "+strMessage);
+    } else if(strTopic.includes("VBN")) {
+      powermeter.VBN = strMessage;
+      io.emit('VBN', strMessage);
+      console.log("LOG Mqtt VBN: "+strMessage);
+    } else if(strTopic.includes("VAB")) {
+      powermeter.VAB = strMessage;
+      io.emit('VAB', strMessage);
+      console.log("LOG Mqtt VAB: "+strMessage);
+    } else if(strTopic.includes("IA")) {
+      powermeter.IA = strMessage;
+      io.emit('IA', strMessage);
+      console.log("LOG Mqtt IA: "+strMessage);
+    } else if(strTopic.includes("IB")) {
+      powermeter.IB = strMessage;
+      io.emit('IB', strMessage);
+      console.log("LOG Mqtt IB: "+strMessage);
+    } else if(strTopic.includes("KWH")) {
+      powermeter.KWH = strMessage;
+      io.emit('KWH', strMessage);
+      console.log("LOG Mqtt KWH: "+strMessage);
     } else if(strTopic.includes("KW")) {
-      
-    } else if(strTopic.includes("KWh")) {
-      
+      powermeter.KWH = strMessage;
+      io.emit('KW', strMessage);
+      console.log("LOG Mqtt KW: "+strMessage);
     } else if(strTopic.includes("FP")) {
-      
+      powermeter.FP = strMessage;
+      io.emit('FP', strMessage);
+      console.log("LOG Mqtt FP: "+strMessage);
     }
   } else if(strTopic.includes("/alarmes/")) {
     if       (strTopic.includes("ALR_GB_OVF")) {

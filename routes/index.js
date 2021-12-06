@@ -36,12 +36,7 @@ router.get('/', function(req, res, next) {
 /* GET Page de connection. */
 router.get('/connection', function(req, res, next) {
   res.render('./pages/connection', { title: 'Connection', messageErreur: erreur.message });
-  if(erreur.message != "") {
-    erreur.message = "";
-  }
-  if(erreur.target != "") {
-    erreur.target = "";
-  }
+  resetErrorInfo();
 });
 
 
@@ -53,9 +48,7 @@ router.get('/contact', function(req, res, next) {
 /* GET Déconnection de l'utilisateur et redirection vers / . */
 router.get('/logout', function(req, res, next) {
   console.log("LOG /logout: Utilisateur '"+login.username+"' déconnecté");
-  login.username = "";
-  login.password = "";
-  login.id = 0;
+  resetUserSession();
   res.redirect("/connection");
 });
 
@@ -70,36 +63,12 @@ router.get('/accueil', function(req, res, next) {
           throw("5 Erreur: Target mal/non définie");
         }
         res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
-        if(erreur.message != "") {
-          erreur.message = "";
-        }
-        if(erreur.target != "") {
-          erreur.target = "";
-        }
+        resetErrorInfo();
       },
       function(error) {
         throw(error);
       }
-    ).catch(function (error) {
-      console.log("CATCH /accueil:");
-      console.log(error);
-  
-      /* Remise à zéro de la session et définition de message d'erreur à afficher sur la page selon le numéro d'erreur. */
-      if ( (error[0] == '1') || (error[0] == '2')) {
-        erreur.message = "Erreur: Nom d'utilisateur ou mot de passe incorrect!";
-      } else if (error[0] == '3') {
-        erreur.message = "Erreur: Probléme de lecture de la banque de donnée! Connection fermée.";
-      } else if (error[0] == '5') {
-        erreur.message = "Erreur inattendu dans /update. Connection fermée.";
-      } else {
-        erreur.message = "Erreur inattendu dans /accueil. Connection fermée.";
-      }
-      login.username = "";
-      login.password = "";
-      login.id = 0;
-      res.redirect('/connection');
-      }
-    );
+    ).catch(errorReadDB(error));
   } else {
     res.redirect("/connection");
   }
@@ -141,36 +110,12 @@ router.post('/accueil', function(req, res, next) {
         login.id = val;
         console.log("LOG /accueil: Utilisateur '"+login.username+"' connecté");
         res.render('./pages/accueil', { title: 'Accueil', myDb: BDD, user: login.id, erreurMessage: erreur.message, erreurTarget: erreur.target});
-        if(erreur.message != "") {
-          erreur.message = "";
-        }
-        if(erreur.target != "") {
-          erreur.target = "";
-        }
+        resetErrorInfo();
       },
       function(error) {
         throw(error);
       }
-    ).catch(function (error) {
-      console.log("CATCH /accueil:");
-      console.log(error);
-  
-      /* Remise à zéro de la session et définition de message d'erreur à afficher sur la page selon le numéro d'erreur. */
-      if ( (error[0] == '1') || (error[0] == '2')) {
-        erreur.message = "Erreur: Nom d'utilisateur ou mot de passe incorrect!";
-      } else if (error[0] == '3') {
-        erreur.message = "Erreur: Probléme de lecture de la banque de donnée! Connection fermée.";
-      } else if (error[0] == '5') {
-        erreur.message = "Erreur inattendu dans /update. Connection fermée.";
-      } else {
-        erreur.message = "Erreur inattendu dans /accueil. Connection fermée.";
-      }
-      login.username = "";
-      login.password = "";
-      login.id = 0;
-      res.redirect('/connection');
-      }
-    );
+    ).catch(errorReadDB(error));
   } else {
     res.redirect('/accueil');
   }
@@ -211,23 +156,13 @@ router.post('/update', function(req, res, next) {
 /* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
 router.get('/balance', function(req, res, next) {
   res.render('./pages/balance', { title: 'Balance', myDb: BDD, user: login.id, poids: balance.poids, tare: balance.tare, unite: balance.unite});
-  if(erreur.message != "") {
-    erreur.message = "";
-  }
-  if(erreur.target != "") {
-    erreur.target = "";
-  }
+  resetErrorInfo();
 })
 
 /* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
 router.get('/powermeter', function(req, res, next) {
   res.render('./pages/powermeter', { title: 'Powermeter', myDb: BDD, user: login.id, powermeter: powermeter});
-  if(erreur.message != "") {
-    erreur.message = "";
-  }
-  if(erreur.target != "") {
-    erreur.target = "";
-  }
+  resetErrorInfo();
 })
 
 /* Fontion qui compare le nom d'utilisateur donnée à ceux contenue dans la banques de donnée */
@@ -249,6 +184,41 @@ function checkUserPassword(db, id, passw) {
   } else {
     return Promise.reject("2 checkUserPassword Erreur: Mot de passe incorrecte");
   }
+}
+
+/* Fonction qui gère les erreurs généré par readDB() */
+function errorReadDB(error) {
+  console.log("CATCH /accueil:");
+  console.log(error);
+
+  /* Remise à zéro de la session et définition de message d'erreur à afficher sur la page selon le numéro d'erreur. */
+  if ( (error[0] == '1') || (error[0] == '2')) {
+    erreur.message = "Erreur: Nom d'utilisateur ou mot de passe incorrect!";
+  } else if (error[0] == '3') {
+    erreur.message = "Erreur: Probléme de lecture de la banque de donnée! Connection fermée.";
+  } else if (error[0] == '5') {
+    erreur.message = "Erreur inattendu dans /update. Connection fermée.";
+  } else {
+    erreur.message = "Erreur inattendu dans /accueil. Connection fermée.";
+  }
+  resetUserSession();
+  res.redirect('/connection');
+}
+
+/* Efface les informations d'erreurs pour éviter l'affichage d'une même érreur sur plusieurs pages */
+function resetErrorInfo() {
+  if(erreur.message != "") {
+    erreur.message = "";
+  }
+  if(erreur.target != "") {
+    erreur.target = "";
+  }
+}
+ /* Efface les informations de l'utilisateur présentement connecté */
+function resetUserSession() {
+  login.username = "";
+  login.password = "";
+  login.id = 0;
 }
 
 /* Fonction qui intéroge toute la banque de donnée et retourne un objet promesse avec les données ou un message d'erreur une fois celle-çi terminé. */

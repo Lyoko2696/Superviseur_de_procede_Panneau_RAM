@@ -1,10 +1,10 @@
-<!-- views/pages/powermeter.ejs -->
+<!-- views/pages/panneau.ejs -->
 <!DOCTYPE html>
 <!--
     Jimmy Martini 04-10-2021
-    Fichier: powermeter.ejs
-    Page qui affiche les information du powermeter.
-    Affiche les informations du powermeter et gère l'alarme qui lui est associé.
+    Fichier: panneau.ejs
+    Page qui affiche les information du panneau RAM.
+    Affiche les informations du panneau RAM et gère les alarmes qui lui est associé.
 -->
 
 <html lang="fr-CA">
@@ -12,29 +12,59 @@
     <%- include('../partials/head') %>
     <script>
       jQuery(function($) {
-        socket.on('VAN', function (val) {
-          $('#VAN').text(val);
+        socket.on('Mode', function (val) {
+          $('#Mode').text(val);
         });
-        socket.on('VBN', function (val) {
-          $('#VBN').text(val);
+        socket.on('NivGB', function (val) {
+          $('#NivGB').text(val);
         });
-        socket.on('VAB', function (val) {
-          $('#VAB').text(val);
+        socket.on('NivPB', function (val) {
+          $('#NivPB').text(val);
         });
-        socket.on('IA', function (val) {
-          $('#IA').text(val);
+        socket.on('TmpGB', function (val) {
+          //$('#TmpGB').text(val);
         });
-        socket.on('IB', function (val) {
-          $('#IB').text(val);
+        socket.on('TmpPB', function (val) {
+          $('#TmpPB').text(val);
         });
-        socket.on('KW', function (val) {
-          $('#KW').text(val);
+        socket.on('ValveGB', function (val) {
+          $('#ValveGB').text(val);
         });
-        socket.on('KWH', function (val) {
-          $('#KWH').text(val);
+        socket.on('ValvePB', function (val) {
+          $('#ValvePB').text(val);
         });
-        socket.on('FP', function (val) {
-          $('#FP').text(val);
+        socket.on('ValveEC', function (val) {
+          $('#ValveEC').text(val);
+        });
+        socket.on('ValveEF', function (val) {
+          $('#ValveEF').text(val);
+        });
+        socket.on('ValveEEC', function (val) {
+          $('#ValveEEC').text(val);
+        });
+        socket.on('ValveEEF', function (val) {
+          $('#ValveEEF').text(val);
+        });
+        socket.on('Pompe', function (val) {
+          $('#Pompe').text(val);
+        });
+        socket.on('PurgeGB', function (val) {
+          $('#PurgeGB').text(val);
+        });
+        socket.on('PurgePB', function (val) {
+          $('#PurgePB').text(val);
+        });
+        socket.on('ConsNivGB', function (val) {
+          $('#ConsNivGB').text(val);
+        });
+        socket.on('ConsNivPB', function (val) {
+          $('#ConsNivPB').text(val);
+        });
+        socket.on('ConsTmpGB', function (val) {
+          //$('#ConsTmpGB').text(val);
+        });
+        socket.on('ConsTmpPB', function (val) {
+          $('#ConsTmpPB').text(val);
         });
         socket.on('ALR_GB_OVF', function (val) {
           var retour = window.confirm("ATTENTION!!\nDébordement du gros bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
@@ -70,28 +100,21 @@
     <main>
       <div class="jumbotron">
         <table class="table">
-          <% for (key of Object.keys(powermeter)) { %>
+          <% for (key of Object.keys(panneau)) { %>
             <tr>
               <td>
                 <span><%=key%>  :</span>
               </td>
               <td>
-                <span id="<%=key%>"><%=powermeter[key]%></span>
+                <span id="<%=key%>"><%=panneau[key]%></span>
               </td>
               <td>
                 <span>
-                  <% if (key=="VAN" || key=="VBN" || key=="VAB") { %>
-                    V
-                  <%} else if (key=="IA" || key=="IB") { %>
-                    A
-                  <%} else if (key=="KW") { %>
-                    KW
-                  <%} else if (key=="KWH") { %>
-                    KWh
-                  <%} else if (key=="FP") { %>
-                    %
+                  <% if (key=="TmpPB" || key=="ConsigneTemperaturePB") { %>
+                    °C
+                  <%} else if (key=="ValveEEC" || key=="ValveEEF" || key=="Pompe" || key=="Mode") { %>
                   <%} else { %>
-                    Erreur
+                    %
                   <% } %>
                 </span>
               </td>

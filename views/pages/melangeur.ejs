@@ -1,10 +1,10 @@
-<!-- views/pages/powermeter.ejs -->
+<!-- views/pages/melangeur.ejs -->
 <!DOCTYPE html>
 <!--
     Jimmy Martini 04-10-2021
-    Fichier: powermeter.ejs
-    Page qui affiche les information du powermeter.
-    Affiche les informations du powermeter et gère l'alarme qui lui est associé.
+    Fichier: melangeur.ejs
+    Page qui affiche les information du melangeur et du shop Vac.
+    Affiche les informations du melangeur et du shop vac et gère les alarmes qui leurs sont associées.
 -->
 
 <html lang="fr-CA">
@@ -12,29 +12,20 @@
     <%- include('../partials/head') %>
     <script>
       jQuery(function($) {
-        socket.on('VAN', function (val) {
-          $('#VAN').text(val);
+        socket.on('recetteStatut', function (val) {
+          $('#recetteStatut').text(val);
         });
-        socket.on('VBN', function (val) {
-          $('#VBN').text(val);
+        socket.on('sequence', function (val) {
+          $('#sequence').text(val);
         });
-        socket.on('VAB', function (val) {
-          $('#VAB').text(val);
+        socket.on('NivA', function (val) {
+          $('#NivA').text(val);
         });
-        socket.on('IA', function (val) {
-          $('#IA').text(val);
+        socket.on('NivB', function (val) {
+          $('#NivB').text(val);
         });
-        socket.on('IB', function (val) {
-          $('#IB').text(val);
-        });
-        socket.on('KW', function (val) {
-          $('#KW').text(val);
-        });
-        socket.on('KWH', function (val) {
-          $('#KWH').text(val);
-        });
-        socket.on('FP', function (val) {
-          $('#FP').text(val);
+        socket.on('NivC', function (val) {
+          $('#NivC').text(val);
         });
         socket.on('ALR_GB_OVF', function (val) {
           var retour = window.confirm("ATTENTION!!\nDébordement du gros bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
@@ -70,31 +61,29 @@
     <main>
       <div class="jumbotron">
         <table class="table">
-          <% for (key of Object.keys(powermeter)) { %>
+            <th>Mélangeur</th>
+            <tr>
+                <td>
+                    <span id="recetteStatut"><%=melangeur.recetteStatut%></span>
+                </td>
+            </tr>
+        </table>
+        <table class="table">
+            <th>Shop Vac</th>
+          <% for (key of Object.keys(shopvac)) { %>
             <tr>
               <td>
                 <span><%=key%>  :</span>
               </td>
               <td>
-                <span id="<%=key%>"><%=powermeter[key]%></span>
+                <span id="<%=key%>"><%=shopvac[key]%></span>
               </td>
+              <% if (key=="sequence") { %>
+              <%} else { %>
               <td>
-                <span>
-                  <% if (key=="VAN" || key=="VBN" || key=="VAB") { %>
-                    V
-                  <%} else if (key=="IA" || key=="IB") { %>
-                    A
-                  <%} else if (key=="KW") { %>
-                    KW
-                  <%} else if (key=="KWH") { %>
-                    KWh
-                  <%} else if (key=="FP") { %>
-                    %
-                  <%} else { %>
-                    Erreur
-                  <% } %>
-                </span>
+                <span>%</span>
               </td>
+              <% } %>
             </tr>
           <% }; %>
         </table>

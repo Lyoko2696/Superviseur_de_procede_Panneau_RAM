@@ -21,6 +21,30 @@
         socket.on('unite', function (val) {
           $('.unite').text(val);
         });
+        socket.on('ALR_GB_OVF', function (val) {
+          var retour = window.confirm("ATTENTION!!\nDébordement du gros bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
+          socket.emit("ALR_GB_OVF ACK", "ACK");
+        });
+        socket.on('ALR_PB_OVF', function (val) {
+          var retour = window.confirm("ATTENTION!!\nDébordement du petit bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
+          socket.emit("ALR_PB_OVF ACK", "ACK");
+        });
+        socket.on('ALR_GB_NIV_MAX', function (val) {
+          var retour = window.confirm("ATTENTION!!\nLe niveau maximum configuré pour le gros bassin à été atteint.\n???");
+          socket.emit("ALR_GB_NIV_MAX ACK", "ACK");
+        });
+        socket.on('ALR_PB_NIV_MAX', function (val) {
+          var retour = window.confirm("ATTENTION!!\nLe niveau maximum configuré pour le petit bassin à été atteint.\n???");
+          socket.emit("ALR_PB_NIV_MAX ACK", "ACK");
+        });
+        socket.on('ALR_CNX_BAL', function (val) {
+          var retour = window.confirm("ATTENTION!!\nLa connection avec la balance à été perdu!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
+          socket.emit("ALR_CNX_BAL ACK", "ACK");
+        });
+        socket.on('ALR_CNX_POW', function (val) {
+          var retour = window.confirm("ATTENTION!!\nLa connection avec le powermeter à été perdu!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
+          socket.emit("ALR_CNX_POW ACK", "ACK");
+        });
       });
     </script>
   </head>
@@ -36,10 +60,10 @@
               <span>Poids :</span>
             </td>
             <td>
-              <span id="poids"><%=poids%></span>
+              <span id="poids"><%=balance.poids%></span>
             </td>
             <td>
-              <span class="unite"><%=unite%></span>
+              <span class="unite"><%=balance.unite%></span>
             </td>
           </tr>
           <tr>
@@ -47,10 +71,10 @@
               <span>Tare :</span>
             </td>
             <td>
-              <span id="tare"><%=tare%></span>
+              <span id="tare"><%=balance.tare%></span>
             </td>
             <td>
-              <span class="unite"><%=unite%></span>
+              <span class="unite"><%=balance.unite%></span>
             </td>
           </tr>
         </table>

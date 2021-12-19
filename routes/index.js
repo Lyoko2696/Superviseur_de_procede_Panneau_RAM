@@ -25,8 +25,13 @@ var erreur = {target : "", message : ""};
 var login = {username : "", password : "", id : 0};
 
 /* Valeurs reçus avec Mqtt */
-var balance = {poids: "0", tare: "0", unite: "lb"};
+var balance =    {poids: "0", tare: "0", unite: "lb"};
 var powermeter = {VAN: "0", VBN: "0", VAB: "0", IA: "0", IB: "0", KW: "0", KWH: "0", FP: "0"};
+var panneau =    {Mode: "Manuel", Pompe: "Off", ValveEEC: "Off", ValveEEF: "Off", ValveGB: "0", ValvePB: "0", ValveEC: "0",ValveEF: "0", NivGB: "0",
+                      NivPB: "0", TmpGB: "---", TmpPB: "0", ConsNivGB: "0", ConsNivPB: "0", ConsTmpGB: "---", ConsTmpPB: "0", PurgeGB: "0", PurgePB: "0"};
+var melangeur =  {recetteStatut: "---"};
+var shopvac =    {sequence: "---", NivA: "0", NivB: "0", NivC: "0"};
+var alarmes =    {ALR_GB_OVF: "", ALR_PB_OVF: "", ALR_GB_NIV_MAX: "", ALR_NIV_PB_MAX: "", ALR_CNX_BAL: "", ALR_CNX_POW: ""}
 
 /* GET Page par défault. Redirige vers /connection */
 router.get('/', function(req, res, next) {
@@ -68,7 +73,7 @@ router.get('/accueil', function(req, res, next) {
       function(error) {
         throw(error);
       }
-    ).catch(errorReadDB(error));
+    ).catch(function (error) {errorReadDB(error);});
   } else {
     res.redirect("/connection");
   }
@@ -115,7 +120,7 @@ router.post('/accueil', function(req, res, next) {
       function(error) {
         throw(error);
       }
-    ).catch(errorReadDB(error));
+    ).catch(function (error) {errorReadDB(error);});
   } else {
     res.redirect('/accueil');
   }
@@ -153,15 +158,27 @@ router.post('/update', function(req, res, next) {
   });
 });
 
-/* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
+/* GET Page d'information de la balance. */
 router.get('/balance', function(req, res, next) {
-  res.render('./pages/balance', { title: 'Balance', myDb: BDD, user: login.id, poids: balance.poids, tare: balance.tare, unite: balance.unite});
+  res.render('./pages/balance', { title: 'Balance', myDb: BDD, user: login.id, balance: balance});
   resetErrorInfo();
 })
 
-/* GET Mise à jour de la banque de donnée demander par l'utilisateur. */
+/* GET Page d'information du powermeter. */
 router.get('/powermeter', function(req, res, next) {
   res.render('./pages/powermeter', { title: 'Powermeter', myDb: BDD, user: login.id, powermeter: powermeter});
+  resetErrorInfo();
+})
+
+/* GET Page d'information du panneau RAM. */
+router.get('/panneau', function(req, res, next) {
+  res.render('./pages/panneau', { title: 'Panneau RAM', myDb: BDD, user: login.id, panneau: panneau});
+  resetErrorInfo();
+})
+
+/* GET Page d'information du panneau RAM. */
+router.get('/melangeur', function(req, res, next) {
+  res.render('./pages/melangeur', { title: 'Mélangeur', myDb: BDD, user: login.id, melangeur: melangeur, shopvac: shopvac});
   resetErrorInfo();
 })
 
@@ -264,142 +281,58 @@ async function modifyDb(data, uTarget, id) {
 /* Gestion des message Mqtt avec socket.io */
 
 /* Console.log des connections mqtt et socket.io */
-client.on('connect',function() {
-  console.log("LOG Mqtt: Connecté à '" + adresseMqtt + "'");
-});
+client.on('connect',function() { console.log("LOG Mqtt: Connecté à '" + adresseMqtt + "'"); });
 
 /* Abonnement aux topics Mqtt */
 client.subscribe('RAM/+/etats/#');
 
-/* Vérification et réactions pour chacuns des messages Mqtt */
+/* Réception et envoie des messages Mqtt avec socket.io */
 client.on('message',function(topic,message) {
   var strTopic = topic.toString();
   var strMessage = message.toString();
+  var topicIndex = 0;
+  console.log("LOG Mqtt "+strTopic.substr(topicIndex)+": "+strMessage);
   if       (strTopic.includes("/panneau/")) {
-    if       (strTopic.includes("NivGB")) {
-    
-    } else if(strTopic.includes("NivPB")) {
-      
-    } else if(strTopic.includes("TmpPB")) {
-      
-    } else if(strTopic.includes("ValveGB")) {
-      
-    } else if(strTopic.includes("ValvePB")) {
-      
-    } else if(strTopic.includes("ValveEC")) {
-      
-    } else if(strTopic.includes("ValveEF")) {
-      
-    } else if(strTopic.includes("ValveEEC")) {
-      
-    } else if(strTopic.includes("ValveEEF")) {
-      
-    } else if(strTopic.includes("Pompe")) {
-      
-    } else if(strTopic.includes("PurgeGB")) {
-      
-    } else if(strTopic.includes("PurgePB")) {
-      
-    }
+    topicIndex = (strTopic.lastIndexOf("/")+1);
+    panneau[strTopic.substr(topicIndex)] = strMessage;
+    io.emit(strTopic.substr(topicIndex), strMessage);
   } else if(strTopic.includes("/balance/")) {
-    if       (strTopic.includes("poids")) {
-      balance.poids = strMessage;
-      io.emit('poids', strMessage);
-      console.log("LOG Mqtt poids: "+strMessage);
-    } else if(strTopic.includes("tare")) {
-      balance.tare = strMessage;
-      io.emit('tare', strMessage);
-      console.log("LOG Mqtt tare: "+strMessage);
-    } else if(strTopic.includes("unite")) {
-      balance.unite = strMessage;
-      io.emit('unite', strMessage);
-      console.log("LOG Mqtt unite: "+strMessage);
-    }
-  } else if(strTopic.includes("/melangeur/recetteStatut")) {
-    
+    topicIndex = (strTopic.lastIndexOf("/")+1);
+    balance[strTopic.substr(topicIndex)] = strMessage;
+    io.emit(strTopic.substr(topicIndex), strMessage);
+  } else if(strTopic.includes("/melangeur/")) {
+    topicIndex = (strTopic.lastIndexOf("/")+1);
+    melangeur[strTopic.substr(topicIndex)] = strMessage;
+    io.emit(strTopic.substr(topicIndex), strMessage);
   } else if(strTopic.includes("/powermeter/")) {
-    if       (strTopic.includes("VAN")) {
-      powermeter.VAB = strMessage;
-      io.emit('VAN', strMessage);
-      console.log("LOG Mqtt VAN: "+strMessage);
-    } else if(strTopic.includes("VBN")) {
-      powermeter.VBN = strMessage;
-      io.emit('VBN', strMessage);
-      console.log("LOG Mqtt VBN: "+strMessage);
-    } else if(strTopic.includes("VAB")) {
-      powermeter.VAB = strMessage;
-      io.emit('VAB', strMessage);
-      console.log("LOG Mqtt VAB: "+strMessage);
-    } else if(strTopic.includes("IA")) {
-      powermeter.IA = strMessage;
-      io.emit('IA', strMessage);
-      console.log("LOG Mqtt IA: "+strMessage);
-    } else if(strTopic.includes("IB")) {
-      powermeter.IB = strMessage;
-      io.emit('IB', strMessage);
-      console.log("LOG Mqtt IB: "+strMessage);
-    } else if(strTopic.includes("KWH")) {
-      powermeter.KWH = strMessage;
-      io.emit('KWH', strMessage);
-      console.log("LOG Mqtt KWH: "+strMessage);
-    } else if(strTopic.includes("KW")) {
-      powermeter.KWH = strMessage;
-      io.emit('KW', strMessage);
-      console.log("LOG Mqtt KW: "+strMessage);
-    } else if(strTopic.includes("FP")) {
-      powermeter.FP = strMessage;
-      io.emit('FP', strMessage);
-      console.log("LOG Mqtt FP: "+strMessage);
-    }
-  } else if(strTopic.includes("/alarmes/")) {
-    if       (strTopic.includes("ALR_GB_OVF")) {
-      console.log("LOG Mqtt ALR_GB_OVF: "+strMessage);
+    topicIndex = (strTopic.lastIndexOf("/")+1);
+    powermeter[strTopic.substr(topicIndex)] = strMessage;
+    io.emit(strTopic.substr(topicIndex), strMessage);
+  } else if(strTopic.includes("/alarmes/etats/")) {
       if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_GB_OVF', 'ACK', {retain: true});
+        topicIndex = (strTopic.lastIndexOf("/")+1);
+        alarmes[strTopic.substr(topicIndex)] = strMessage;
+        io.emit(strTopic.substr(topicIndex), strMessage);
       }
-    } else if(strTopic.includes("ALR_PB_OVF")) {
-      console.log("LOG Mqtt ALR_PB_OVF: "+strMessage);
-      if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_PB_OVF', 'ACK', {retain: true});
-      }
-    } else if(strTopic.includes("ALR_GB_NIV_MAX")) {
-      console.log("LOG Mqtt ALR_GB_NIV_MAX: "+strMessage);
-      if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_GB_NIV_MAX', 'ACK', {retain: true});
-      }
-    } else if(strTopic.includes("ALR_PB_NIV_MAX")) {
-      console.log("LOG Mqtt ALR_PB_NIV_MAX: "+strMessage);
-      if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_PB_NIV_MAX', 'ACK', {retain: true});
-      }
-    } else if(strTopic.includes("ALR_CNX_BAL")) {
-      console.log("LOG Mqtt ALR_CNX_BAL: "+strMessage);
-      if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_CNX_BAL', 'ACK', {retain: true});
-      }
-    } else if(strTopic.includes("ALR_CNX_POW")) {
-      console.log("LOG Mqtt ALR_CNX_POW: "+strMessage);
-      if(strMessage == "ON") {
-        client.publish('RAM/alarmes/etats/ALR_CNX_POW', 'ACK', {retain: true});
-      }
-    }
   } else if(strTopic.includes("/shopvac/")) {
-    if       (strTopic.includes("sequence")) {
-    
-    } else if(strTopic.includes("NivA")) {
+    topicIndex = (strTopic.lastIndexOf("/")+1);
+    shopvac[strTopic.substr(topicIndex)] = strMessage;
+    io.emit(strTopic.substr(topicIndex), strMessage);
+  } //else if(strTopic.includes("/valves/")) {
+    //if       (strTopic.includes("Ouverture_PB")) {
       
-    } else if(strTopic.includes("NivB")) {
+    //} else if(strTopic.includes("Ouverture_GB")) {
       
-    } else if(strTopic.includes("NivC")) {
-      
-    }
-  } else if(strTopic.includes("/valves/")) {
-    if       (strTopic.includes("Ouverture_PB")) {
-      
-    } else if(strTopic.includes("Ouverture_GB")) {
-      
-    }
-  }
+    //}
+  //}
 });
+
+/* Réception des réponses aux alarmes et envoie les "Acknowledgement" approprié. */
+io.on('ALR_GB_OVF ACK',     function (val) { client.publish('ALR_GB_OVF',     'ACK', {retain: true}); });
+io.on('ALR_PB_OVF ACK',     function (val) { client.publish('ALR_PB_OVF',     'ACK', {retain: true}); });
+io.on('ALR_GB_NIV_MAX ACK', function (val) { client.publish('ALR_GB_NIV_MAX', 'ACK', {retain: true}); });
+io.on('ALR_PB_NIV_MAX ACK', function (val) { client.publish('ALR_PB_NIV_MAX', 'ACK', {retain: true}); });
+io.on('ALR_CNX_BAL ACK',    function (val) { client.publish('ALR_CNX_BAL',    'ACK', {retain: true}); });
+io.on('ALR_CNX_POW ACK',    function (val) { client.publish('ALR_CNX_POW',    'ACK', {retain: true}); });
 
 module.exports = router;

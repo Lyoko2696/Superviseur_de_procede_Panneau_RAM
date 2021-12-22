@@ -38,7 +38,7 @@
         });
         socket.on('ALR_GB_OVF', function (val) {
           var retour = window.confirm("ATTENTION!!\nDébordement du gros bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
-          socket.emit("ALR_GB_OVF ACK", "ACK");
+          socket.emit('ALR_GB_OVF ACK', "ACK");
         });
         socket.on('ALR_PB_OVF', function (val) {
           var retour = window.confirm("ATTENTION!!\nDébordement du petit bassin!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");

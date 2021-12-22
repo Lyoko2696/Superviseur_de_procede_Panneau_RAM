@@ -14,7 +14,6 @@ var mqtt = require('mqtt');
 var adresseMqtt = "mqtt://172.17.15.103:1883";
 var client = mqtt.connect(adresseMqtt);
 
-
   /* Variable globales */
 
 /* Banque de données des utilisateurs */
@@ -28,10 +27,11 @@ var login = {username : "", password : "", id : 0};
 var balance =    {poids: "0", tare: "0", unite: "lb"};
 var powermeter = {VAN: "0", VBN: "0", VAB: "0", IA: "0", IB: "0", KW: "0", KWH: "0", FP: "0"};
 var panneau =    {Mode: "Manuel", Pompe: "Off", ValveEEC: "Off", ValveEEF: "Off", ValveGB: "0", ValvePB: "0", ValveEC: "0",ValveEF: "0", NivGB: "0",
-                      NivPB: "0", TmpGB: "---", TmpPB: "0", ConsNivGB: "0", ConsNivPB: "0", ConsTmpGB: "---", ConsTmpPB: "0", PurgeGB: "0", PurgePB: "0"};
+                      NivPB: "0", TmpGB: "---", TmpPB: "0", ConsNivGB: "0", ConsNivPB: "0", ConsTmpGB: "---", ConsTmpPB: "0"};
 var melangeur =  {recetteStatut: "---"};
 var shopvac =    {sequence: "---", NivA: "0", NivB: "0", NivC: "0"};
 var alarmes =    {ALR_GB_OVF: "", ALR_PB_OVF: "", ALR_GB_NIV_MAX: "", ALR_NIV_PB_MAX: "", ALR_CNX_BAL: "", ALR_CNX_POW: ""}
+var valves =     {Ouverture_PB: "0", Ouverture_GB: "0"};
 
 /* GET Page par défault. Redirige vers /connection */
 router.get('/', function(req, res, next) {
@@ -284,55 +284,55 @@ async function modifyDb(data, uTarget, id) {
 client.on('connect',function() { console.log("LOG Mqtt: Connecté à '" + adresseMqtt + "'"); });
 
 /* Abonnement aux topics Mqtt */
-client.subscribe('RAM/+/etats/#');
+client.subscribe('RAM/+/+/#');
 
 /* Réception et envoie des messages Mqtt avec socket.io */
 client.on('message',function(topic,message) {
-  var strTopic = topic.toString();
   var strMessage = message.toString();
-  var topicIndex = 0;
-  console.log("LOG Mqtt "+strTopic.substr(topicIndex)+": "+strMessage);
-  if       (strTopic.includes("/panneau/")) {
-    topicIndex = (strTopic.lastIndexOf("/")+1);
-    panneau[strTopic.substr(topicIndex)] = strMessage;
-    io.emit(strTopic.substr(topicIndex), strMessage);
-  } else if(strTopic.includes("/balance/")) {
-    topicIndex = (strTopic.lastIndexOf("/")+1);
-    balance[strTopic.substr(topicIndex)] = strMessage;
-    io.emit(strTopic.substr(topicIndex), strMessage);
-  } else if(strTopic.includes("/melangeur/")) {
-    topicIndex = (strTopic.lastIndexOf("/")+1);
-    melangeur[strTopic.substr(topicIndex)] = strMessage;
-    io.emit(strTopic.substr(topicIndex), strMessage);
-  } else if(strTopic.includes("/powermeter/")) {
-    topicIndex = (strTopic.lastIndexOf("/")+1);
-    powermeter[strTopic.substr(topicIndex)] = strMessage;
-    io.emit(strTopic.substr(topicIndex), strMessage);
-  } else if(strTopic.includes("/alarmes/etats/")) {
+  var topicIndex = (topic.lastIndexOf("/")+1);
+  console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  if       (topic.includes("/panneau/")) {
+    panneau[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  } else if(topic.includes("/balance/")) {
+    balance[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  } else if(topic.includes("/melangeur/")) {
+    melangeur[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  } else if(topic.includes("/powermeter/")) {
+    powermeter[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  } else if(topic.includes("/alarmes/etats/")) {
       if(strMessage == "ON") {
-        topicIndex = (strTopic.lastIndexOf("/")+1);
-        alarmes[strTopic.substr(topicIndex)] = strMessage;
-        io.emit(strTopic.substr(topicIndex), strMessage);
+        io.emit(topic.substr(topicIndex), strMessage);
       }
-  } else if(strTopic.includes("/shopvac/")) {
-    topicIndex = (strTopic.lastIndexOf("/")+1);
-    shopvac[strTopic.substr(topicIndex)] = strMessage;
-    io.emit(strTopic.substr(topicIndex), strMessage);
-  } //else if(strTopic.includes("/valves/")) {
-    //if       (strTopic.includes("Ouverture_PB")) {
-      
-    //} else if(strTopic.includes("Ouverture_GB")) {
-      
-    //}
-  //}
+  } else if(topic.includes("/shopvac/")) {
+    shopvac[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  } else if(topic.includes("/valves/")) {
+    valves[topic.substr(topicIndex)] = strMessage;
+    io.emit(topic.substr(topicIndex), strMessage);
+  }
 });
 
 /* Réception des réponses aux alarmes et envoie les "Acknowledgement" approprié. */
-io.on('ALR_GB_OVF ACK',     function (val) { client.publish('ALR_GB_OVF',     'ACK', {retain: true}); });
-io.on('ALR_PB_OVF ACK',     function (val) { client.publish('ALR_PB_OVF',     'ACK', {retain: true}); });
-io.on('ALR_GB_NIV_MAX ACK', function (val) { client.publish('ALR_GB_NIV_MAX', 'ACK', {retain: true}); });
-io.on('ALR_PB_NIV_MAX ACK', function (val) { client.publish('ALR_PB_NIV_MAX', 'ACK', {retain: true}); });
-io.on('ALR_CNX_BAL ACK',    function (val) { client.publish('ALR_CNX_BAL',    'ACK', {retain: true}); });
-io.on('ALR_CNX_POW ACK',    function (val) { client.publish('ALR_CNX_POW',    'ACK', {retain: true}); });
+io.on("connection", (socket) => {
+  socket.on('ALR_GB_OVF ACK',     function (val) { client.publish('RAM/alarmes/etats/ALR_GB_OVF',     'ACK', {retain: true});});
+  socket.on('ALR_PB_OVF ACK',     function (val) { client.publish('RAM/alarmes/etats/ALR_PB_OVF',     'ACK', {retain: true});});
+  socket.on('ALR_GB_NIV_MAX ACK', function (val) { client.publish('RAM/alarmes/etats/ALR_GB_NIV_MAX', 'ACK', {retain: true});});
+  socket.on('ALR_PB_NIV_MAX ACK', function (val) { client.publish('RAM/alarmes/etats/ALR_PB_NIV_MAX', 'ACK', {retain: true});});
+  socket.on('ALR_CNX_BAL ACK',    function (val) { client.publish('RAM/alarmes/etats/ALR_CNX_BAL',    'ACK', {retain: true});});
+  socket.on('ALR_CNX_POW ACK',    function (val) { client.publish('RAM/alarmes/etats/ALR_CNX_POW',    'ACK', {retain: true});});
+
+/* Réception des commandes et les redirige sur le topic Mqtt approprié. */
+  socket.on('cmd_motA',           function (val) { client.publish('RAM/melangeur/cmd/motA',           val,   {retain: true});});
+  socket.on('cmd_motB',           function (val) { client.publish('RAM/melangeur/cmd/motB',           val,   {retain: true});});
+  socket.on('cmd_motC',           function (val) { client.publish('RAM/melangeur/cmd/motC',           val,   {retain: true});});
+  socket.on('cmd_mode',           function (val) { client.publish('RAM/melangeur/cmd/mode',           val,   {retain: true});});
+  socket.on('cmd_recette',        function (val) { client.publish('RAM/melangeur/cmd/recette',        val,   {retain: true});});
+  socket.on('cmd_Go',             function (val) { client.publish('RAM/melangeur/cmd/recetteGo',      val,   {retain: true});});
+});
+
 
 module.exports = router;

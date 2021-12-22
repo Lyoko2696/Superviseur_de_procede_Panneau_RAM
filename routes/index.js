@@ -286,7 +286,7 @@ async function modifyDb(data, uTarget, id) {
 client.on('connect',function() { console.log("LOG Mqtt: Connecté à '" + adresseMqtt + "'"); });
 
 /* Abonnement aux topics Mqtt */
-client.subscribe('RAM/+/+/#');
+client.subscribe('RAM/#');
 
 /* Réception et envoie des messages Mqtt avec socket.io */
 client.on('message',function(topic,message) {

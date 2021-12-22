@@ -86,9 +86,19 @@
       function toggleMode() {
         if(document.getElementById("mode").innerHTML == "Manuel") {
           $('#mode').text("Auto");
+          $('#motA').attr('disabled','disabled');
+          $('#motB').attr('disabled','disabled');
+          $('#motC').attr('disabled','disabled');
+          $('#goStop_mel').attr('disabled','disabled');
+          $('#flush').attr('disabled','disabled');
           socket.emit("cmd_mode_mel", "auto");
         } else {
           $('#mode').text("Manuel");
+          $('#motA').removeAttr('disabled');
+          $('#motB').removeAttr('disabled');
+          $('#motC').removeAttr('disabled');
+          $('#goStop_mel').removeAttr('disabled');
+          $('#flush').removeAttr('disabled');
           socket.emit("cmd_mode", "manuel");
         }
       };
@@ -136,7 +146,7 @@
               <td>Mode : <button onclick="toggleMode()" id="mode">Manuel</button></td>
               <td>Recette : eg. 1-456-25
                 <form id="recette">
-                  <input type="text" value="1-10-100" id="cmd" pattern="\d{1,3}-\d{1,3}-\d{1,3}"> g <input type="submit" value="Envoyer">
+                  <input type="text" id="cmd" pattern="\d{1,3}-\d{1,3}-\d{1,3}"> g <input type="submit" value="Envoyer">
                 </form>
               </td>
             </tr>

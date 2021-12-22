@@ -48,12 +48,6 @@
         socket.on('Pompe', function (val) {
           $('#Pompe').text(val);
         });
-        socket.on('PurgeGB', function (val) {
-          $('#PurgeGB').text(val);
-        });
-        socket.on('PurgePB', function (val) {
-          $('#PurgePB').text(val);
-        });
         socket.on('ConsNivGB', function (val) {
           $('#ConsNivGB').text(val);
         });
@@ -90,7 +84,105 @@
           var retour = window.confirm("ATTENTION!!\nLa connection avec le powermeter à été perdu!\nAction de l'opérateur sur la machine est recommandé avant de fermer cette alerte.");
           socket.emit("ALR_CNX_POW ACK", "ACK");
         });
+        $("#ValveGBform").submit(function() {
+          socket.emit("cmd_ValveGB", $('#cmdValveGB').val());
+          return false;
+        });
+        $("#ValvePBform").submit(function() {
+          socket.emit("cmd_ValvePB", $('#cmdValvePB').val());
+          return false;
+        });
+        $("#ValveECform").submit(function() {
+          socket.emit("cmd_ValveEC", $('#cmdValveEC').val());
+          return false;
+        });
+        $("#ValveEFform").submit(function() {
+          socket.emit("cmd_ValveEF", $('#cmdValveEF').val());
+          return false;
+        });
+        $("#ConsNivGBform").submit(function() {
+          socket.emit("cmd_ConsNivGB", $('#cmdConsNivGB').val());
+          return false;
+        });
+        $("#ConsNivPBform").submit(function() {
+          socket.emit("cmd_ConsNivPB", $('#cmdConsNivPB').val());
+          return false;
+        });
+        $("#ConsTmpGBform").submit(function() {
+          //socket.emit("cmd_ConsTmpGB", $('#cmdConsTmpGB').val());
+          return false;
+        });
+        $("#ConsTmpPBform").submit(function() {
+          socket.emit("cmd_ConsTmpPB", $('#cmdConsTmpPB').val());
+          return false;
+        });
       });
+      function toggleMode() {
+        if(document.getElementById("Mode").innerHTML == "manuel") {
+          $('#Mode').text(" auto ");
+          $('#Mode').val(" auto ");
+          $('#Pompe').attr('disabled','disabled');
+          $('#ValveEEC').attr('disabled','disabled');
+          $('#ValveEEF').attr('disabled','disabled');
+          $('#cmdValveGB').attr('disabled','disabled');
+          $('#cmdValvePB').attr('disabled','disabled');
+          $('#cmdValveEC').attr('disabled','disabled');
+          $('#cmdValveEF').attr('disabled','disabled');
+          $('#btnValveGB').attr('disabled','disabled');
+          $('#btnValvePB').attr('disabled','disabled');
+          $('#btnValveEC').attr('disabled','disabled');
+          $('#btnValveEF').attr('disabled','disabled');
+          socket.emit("cmd_Mode_pan", "auto");
+        } else {
+          $('#Mode').text("manuel");
+          $('#Mode').val("manuel");
+          $('#Pompe').removeAttr('disabled');
+          $('#ValveEEC').removeAttr('disabled');
+          $('#ValveEEF').removeAttr('disabled');
+          $('#cmdValveGB').removeAttr('disabled');
+          $('#cmdValvePB').removeAttr('disabled');
+          $('#cmdValveEC').removeAttr('disabled');;
+          $('#cmdValveEF').removeAttr('disabled');
+          $('#btnValveGB').removeAttr('disabled');
+          $('#btnValvePB').removeAttr('disabled');
+          $('#btnValveEC').removeAttr('disabled');;
+          $('#btnValveEF').removeAttr('disabled');
+          socket.emit("cmd_Mode_pan", "manuel");
+        }
+      };
+      function togglePompe() {
+        if(document.getElementById("Pompe").innerHTML == "on") {
+          $('#Pompe').text("off");
+          $('#Pompe').val("off");
+          socket.emit("cmd_Pompe", "off");
+        } else {
+          $('#Pompe').text("on");
+          $('#Pompe').val("on");
+          socket.emit("cmd_Pompe", "on");
+        }
+      };
+      function toggleValveEEC() {
+        if(document.getElementById("ValveEEC").innerHTML == "on") {
+          $('#ValveEEC').text("off");
+          $('#ValveEEC').val("off");
+          socket.emit("cmd_ValveEEC", "off");
+        } else {
+          $('#ValveEEC').text("on");
+          $('#ValveEEC').val("on");
+          socket.emit("cmd_ValveEEC", "on");
+        }
+      };
+      function toggleValveEEF() {
+        if(document.getElementById("ValveEEF").innerHTML == "on") {
+          $('#ValveEEF').text("off");
+          $('#ValveEEF').val("off");
+          socket.emit("cmd_ValveEEF", "off");
+        } else {
+          $('#ValveEEF').text("on");
+          $('#ValveEEF').val("on");
+          socket.emit("cmd_ValveEEF", "on");
+        }
+      };
     </script>
   </head>
   <body class="container">
@@ -100,23 +192,38 @@
     <main>
       <div class="jumbotron">
         <table class="table">
+          <tr>
+            <th>Noms</th>
+            <th>État</th>
+            <th>0% / 100%</th>
+          </tr>
           <% for (key of Object.keys(panneau)) { %>
             <tr>
               <td>
                 <span><%=key%>  :</span>
               </td>
               <td>
-                <span id="<%=key%>"><%=panneau[key]%></span>
+                <% if (key=="TmpGB" || key=="TmpPB" || key=="ConsigneTemperatureGB" || key=="ConsigneTemperaturePB") { %>
+                  <%=panneau[key]%> °C
+                <%} else if (key=="ValveEEC" || key=="ValveEEF" || key=="Pompe" || key=="Mode") { %>
+                  <input type="button" onclick="toggle<%=key%>()" id="<%=key%>" value="<%=panneau[key]%>"></input>
+                <%} else { %>
+                  <%=panneau[key]%> %
+                <% } %>
               </td>
               <td>
-                <span>
-                  <% if (key=="TmpPB" || key=="ConsigneTemperaturePB") { %>
-                    °C
-                  <%} else if (key=="ValveEEC" || key=="ValveEEF" || key=="Pompe" || key=="Mode") { %>
+                  <% if (key=="Mode" || key=="Pompe" || key=="ValveEEC" || key=="ValveEEF") { %>
+                  <%} else if (key=="NivGB" || key=="NivPB" || key=="TmpGB" || key=="TmpPB") { %>
+                  <%} else if (key=="ConsTmpGB") { %>
+                    <form id="<%=key%>form">
+                      <input type="text" disabled><input type="submit" value="Envoyer" disabled>
+                    </form>
                   <%} else { %>
-                    %
+                    <form id="<%=key%>form">
+                      <input type="text" id="cmd<%=key%>" pattern="^(?:[0-9][0-9]?|100)$"><input id="btn<%=key%>" type="submit" value="Envoyer">
+                    </form>
                   <% } %>
-                </span>
+                </button>
               </td>
             </tr>
           <% }; %>

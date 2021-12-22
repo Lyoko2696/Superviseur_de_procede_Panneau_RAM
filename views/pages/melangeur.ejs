@@ -53,53 +53,65 @@
         });
         $("#recette").submit(function() {
           socket.emit("cmd_recette", $('#cmd').val());
+          return false;
         });
       });
       function toggleMotA() {
-          if(document.getElementById("motA").innerHTML == "Off") {
-            $('#motA').text("On");
-            socket.emit("cmd_motA", "on");
-          } else {
-            $('#motA').text("Off");
-            socket.emit("cmd_motA", "off");
-          }
-        };
-        function toggleMotB() {
-          if(document.getElementById("motB").innerHTML == "Off") {
-            $('#motB').text("On");
-            socket.emit("cmd_motB", "on");
-          } else {
-            $('#motB').text("Off");
-            socket.emit("cmd_motB", "off");
-          }
-        };
-        function toggleMotC() {
-          if(document.getElementById("motC").innerHTML == "Off") {
-            $('#motC').text("On");
-            socket.emit("cmd_motC", "on");
-          } else {
-            $('#motC').text("Off");
-            socket.emit("cmd_motC", "off");
-          }
-        };
-        function toggleMode() {
-          if(document.getElementById("mode").innerHTML == "Manuel") {
-            $('#mode').text("Auto");
-            socket.emit("cmd_mode", "auto");
-          } else {
-            $('#mode').text("Manuel");
-            socket.emit("cmd_mode", "manuel");
-          }
-        };
-        function recetteGo() {
-          socket.emit("cmd_Go", "go");
-        };
-        function recetteStop() {
-          socket.emit("cmd_Go", "stop");
-        };
-        function recetteFlush() {
-          socket.emit("cmd_Go", "flush");
-        };
+        if(document.getElementById("motA").innerHTML == "Off") {
+          $('#motA').text("On");
+          socket.emit("cmd_motA", "on");
+        } else {
+          $('#motA').text("Off");
+          socket.emit("cmd_motA", "off");
+        }
+      };
+      function toggleMotB() {
+        if(document.getElementById("motB").innerHTML == "Off") {
+          $('#motB').text("On");
+          socket.emit("cmd_motB", "on");
+        } else {
+          $('#motB').text("Off");
+          socket.emit("cmd_motB", "off");
+        }
+      };
+      function toggleMotC() {
+        if(document.getElementById("motC").innerHTML == "Off") {
+          $('#motC').text("On");
+          socket.emit("cmd_motC", "on");
+        } else {
+          $('#motC').text("Off");
+          socket.emit("cmd_motC", "off");
+        }
+      };
+      function toggleMode() {
+        if(document.getElementById("mode").innerHTML == "Manuel") {
+          $('#mode').text("Auto");
+          socket.emit("cmd_mode_mel", "auto");
+        } else {
+          $('#mode').text("Manuel");
+          socket.emit("cmd_mode", "manuel");
+        }
+      };
+      function recetteGo() {
+        $('#goStop_mel').text("Stop");
+        //$('#Mode').val(" auto ");
+        $('#goStop_mel').attr('onclick','recetteStop()');
+        socket.emit("cmd_Go", "go");
+      };
+      function recetteStop() {
+        $('#goStop_mel').text(" Go ");
+        $('#goStop_mel').attr('onclick','recetteGo()');
+        socket.emit("cmd_Go", "stop");
+      };
+      function recetteFlush() {
+        socket.emit("cmd_Go", "flush");
+      };
+      function goShop() {
+        socket.emit("cmd_force", "GO");
+      };
+      function stopShop() {
+        socket.emit("cmd_force", "STOP");
+      };
     </script>
   </head>
   <body class="container">
@@ -111,28 +123,33 @@
         <table class="table">
             <th>Mélangeur<span id="trig"></span></th>
             <tr>
+              <td>Statut : <span id="recetteStatut"><%=melangeur.recetteStatut%></span></td>
+              <td><button onclick="recetteGo()"    id="goStop_mel">Go</button></td>
+              <td><button onclick="recetteFlush()" id="flush">Flush</button></td>
+            </tr>
+            <tr>
               <td>Moteur A : <button onclick="toggleMotA()" id="motA">Off</button></td>
               <td>Moteur B : <button onclick="toggleMotB()" id="motB">Off</button></td>
               <td>Moteur C : <button onclick="toggleMotC()" id="motC">Off</button></td>
             </tr>
             <tr>
               <td>Mode : <button onclick="toggleMode()" id="mode">Manuel</button></td>
-              <td>
-                Recette : 
+              <td>Recette : eg. 1-456-25
                 <form id="recette">
-                  <input type="text" value="1-10-100" id="cmd" pattern="\d{1,3}-\d{1,3}-\d{1,3}">g  <input type="submit" value="Envoyer">
+                  <input type="text" value="1-10-100" id="cmd" pattern="\d{1,3}-\d{1,3}-\d{1,3}"> g <input type="submit" value="Envoyer">
                 </form>
               </td>
-            </tr>
-            <tr>
-              <td>Statut : <span id="recetteStatut"><%=melangeur.recetteStatut%></span></td>
-              <td><button onclick="recetteGo()"    id="go">Go</button></td>
-              <td><button onclick="recetteStop()"  id="stop">Stop</button></td>
-              <td><button onclick="recetteFlush()" id="flush">Flush</button></td>
             </tr>
         </table>
         <table class="table">
             <th>Shop Vac</th>
+            <th></th>
+            <th>
+              <input type="button" onclick="goShop()" id="goShop" value="GO"></input>
+            </th>
+            <th>
+              <input type="button" onclick="stopShop()" id="stopShop" value="STOP"></input>
+            </th>
           <% for (key of Object.keys(shopvac)) { %>
             <tr>
               <td>
@@ -144,7 +161,7 @@
               <% if (key=="sequence") { %>
               <%} else { %>
               <td>
-                <span>%</span>
+                %
               </td>
               <% } %>
             </tr>

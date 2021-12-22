@@ -11,7 +11,7 @@ var router = express.Router();
 var connection = require('../manageDb');
 var { io } = require('../socketApi');
 var mqtt = require('mqtt');
-var adresseMqtt = "mqtt://172.17.15.103:1883";
+var adresseMqtt = "mqtt://192.168.50.40:1883";
 var client = mqtt.connect(adresseMqtt);
 
   /* Variable globales */
@@ -26,12 +26,14 @@ var login = {username : "", password : "", id : 0};
 /* Valeurs reçus avec Mqtt */
 var balance =    {poids: "0", tare: "0", unite: "lb"};
 var powermeter = {VAN: "0", VBN: "0", VAB: "0", IA: "0", IB: "0", KW: "0", KWH: "0", FP: "0"};
-var panneau =    {Mode: "Manuel", Pompe: "Off", ValveEEC: "Off", ValveEEF: "Off", ValveGB: "0", ValvePB: "0", ValveEC: "0",ValveEF: "0", NivGB: "0",
+var panneau =    {Mode: "manuel", Pompe: "off", ValveEEC: "off", ValveEEF: "off", ValveGB: "0", ValvePB: "0", ValveEC: "0",ValveEF: "0", NivGB: "0",
                       NivPB: "0", TmpGB: "---", TmpPB: "0", ConsNivGB: "0", ConsNivPB: "0", ConsTmpGB: "---", ConsTmpPB: "0"};
-var melangeur =  {recetteStatut: "---"};
+var melangeur =  {recetteStatut: "---", mode: "manuel", motA: "off", motB: "off", motC: "off", recette: "", recetteGo: "stop"};
 var shopvac =    {sequence: "---", NivA: "0", NivB: "0", NivC: "0"};
-var alarmes =    {ALR_GB_OVF: "", ALR_PB_OVF: "", ALR_GB_NIV_MAX: "", ALR_NIV_PB_MAX: "", ALR_CNX_BAL: "", ALR_CNX_POW: ""}
+var alarmes =    {ALR_GB_OVF: "", ALR_PB_OVF: "", ALR_GB_NIV_MAX: "", ALR_PB_NIV_MAX: "", ALR_CNX_BAL: "", ALR_CNX_POW: ""}
 var valves =     {Ouverture_PB: "0", Ouverture_GB: "0"};
+
+var ignoreMqttFlag = false;
 
 /* GET Page par défault. Redirige vers /connection */
 router.get('/', function(req, res, next) {
@@ -290,48 +292,166 @@ client.subscribe('RAM/+/+/#');
 client.on('message',function(topic,message) {
   var strMessage = message.toString();
   var topicIndex = (topic.lastIndexOf("/")+1);
-  console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
-  if       (topic.includes("/panneau/")) {
+  if       (topic.includes("/panneau/") && !ignoreMqttFlag) {
     panneau[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
-  } else if(topic.includes("/balance/")) {
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  } else if(topic.includes("/balance/") && !ignoreMqttFlag) {
     balance[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
-  } else if(topic.includes("/melangeur/")) {
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  } else if(topic.includes("/melangeur/") && !ignoreMqttFlag) {
     melangeur[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
-  } else if(topic.includes("/powermeter/")) {
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  } else if(topic.includes("/powermeter/") && !ignoreMqttFlag) {
     powermeter[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
-  } else if(topic.includes("/alarmes/etats/")) {
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  } else if(topic.includes("/alarmes/etats/") && !ignoreMqttFlag) {
       if(strMessage == "ON") {
+        alarmes[topic.substr(topicIndex)] = strMessage;
         io.emit(topic.substr(topicIndex), strMessage);
+        console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
       }
-  } else if(topic.includes("/shopvac/")) {
+  } else if(topic.includes("/shopvac/") && !ignoreMqttFlag) {
     shopvac[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
-  } else if(topic.includes("/valves/")) {
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
+  } else if(topic.includes("/valves/") && !ignoreMqttFlag) {
     valves[topic.substr(topicIndex)] = strMessage;
     io.emit(topic.substr(topicIndex), strMessage);
+    console.log("LOG Mqtt "+topic.substr(topicIndex)+": "+strMessage);
   }
 });
 
-/* Réception des réponses aux alarmes et envoie les "Acknowledgement" approprié. */
-io.on("connection", (socket) => {
-  socket.on('ALR_GB_OVF ACK',     function (val) { client.publish('RAM/alarmes/etats/ALR_GB_OVF',     'ACK', {retain: true});});
-  socket.on('ALR_PB_OVF ACK',     function (val) { client.publish('RAM/alarmes/etats/ALR_PB_OVF',     'ACK', {retain: true});});
-  socket.on('ALR_GB_NIV_MAX ACK', function (val) { client.publish('RAM/alarmes/etats/ALR_GB_NIV_MAX', 'ACK', {retain: true});});
-  socket.on('ALR_PB_NIV_MAX ACK', function (val) { client.publish('RAM/alarmes/etats/ALR_PB_NIV_MAX', 'ACK', {retain: true});});
-  socket.on('ALR_CNX_BAL ACK',    function (val) { client.publish('RAM/alarmes/etats/ALR_CNX_BAL',    'ACK', {retain: true});});
-  socket.on('ALR_CNX_POW ACK',    function (val) { client.publish('RAM/alarmes/etats/ALR_CNX_POW',    'ACK', {retain: true});});
+/* Lorsque la connection est active, écoute pour recevoir les socket du client. */
 
-/* Réception des commandes et les redirige sur le topic Mqtt approprié. */
-  socket.on('cmd_motA',           function (val) { client.publish('RAM/melangeur/cmd/motA',           val,   {retain: true});});
-  socket.on('cmd_motB',           function (val) { client.publish('RAM/melangeur/cmd/motB',           val,   {retain: true});});
-  socket.on('cmd_motC',           function (val) { client.publish('RAM/melangeur/cmd/motC',           val,   {retain: true});});
-  socket.on('cmd_mode',           function (val) { client.publish('RAM/melangeur/cmd/mode',           val,   {retain: true});});
-  socket.on('cmd_recette',        function (val) { client.publish('RAM/melangeur/cmd/recette',        val,   {retain: true});});
-  socket.on('cmd_Go',             function (val) { client.publish('RAM/melangeur/cmd/recetteGo',      val,   {retain: true});});
+io.on("connection", (socket) => {
+  /* Réception des réponses aux alarmes et envoie les "Acknowledgement" approprié. */
+  socket.on('ALR_GB_OVF ACK',     function (val) {
+    client.publish('RAM/alarmes/etats/ALR_GB_OVF','ACK', {retain: true});
+    alarmes.ALR_GB_OVF = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('ALR_PB_OVF ACK',     function (val) {
+    client.publish('RAM/alarmes/etats/ALR_PB_OVF',     'ACK', {retain: true});
+    alarmes.ALR_PB_OVF     = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('ALR_GB_NIV_MAX ACK', function (val) {
+    client.publish('RAM/alarmes/etats/ALR_GB_NIV_MAX', 'ACK', {retain: true});
+    alarmes.ALR_GB_NIV_MAX = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('ALR_PB_NIV_MAX ACK', function (val) {
+    client.publish('RAM/alarmes/etats/ALR_PB_NIV_MAX', 'ACK', {retain: true});
+    alarmes.ALR_PB_NIV_MAX = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('ALR_CNX_BAL ACK',    function (val) {
+    client.publish('RAM/alarmes/etats/ALR_CNX_BAL',    'ACK', {retain: true});
+    alarmes.ALR_CNX_BAL    = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('ALR_CNX_POW ACK',    function (val) {
+    client.publish('RAM/alarmes/etats/ALR_CNX_POW',    'ACK', {retain: true});
+    alarmes.ALR_CNX_POW    = val;
+    ignoreMqttFlag = true;
+  });
+
+  /* Réception des commandes pour le mélangeur et le shop vac et envoie ces comandes sur le topic Mqtt approprié. */
+  socket.on('cmd_motA',           function (val) {
+    client.publish('RAM/melangeur/cmd/motA',           val,   {retain: true});
+    melangeur.motA      = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_motB',           function (val) {
+    client.publish('RAM/melangeur/cmd/motB',           val,   {retain: true});
+    melangeur.motB      = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_motC',           function (val) {
+    client.publish('RAM/melangeur/cmd/motC',           val,   {retain: true});
+    melangeur.motC      = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_mode_mel',       function (val) {
+    client.publish('RAM/melangeur/cmd/mode',           val,   {retain: true});
+    melangeur.mode      = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_recette',        function (val) {
+    client.publish('RAM/melangeur/cmd/recette',        val,   {retain: true});
+    melangeur.recette   = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_Go',             function (val) {
+    client.publish('RAM/melangeur/cmd/recetteGo',      val,   {retain: true});
+    melangeur.recetteGo = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_force',             function (val) {
+    client.publish('RAM/shopvac/cmd/force',      val,   {retain: true});
+    ignoreMqttFlag = true;
+  });
+
+  /* Réception des commandes pour le panneau RAM et envoie ces comandes sur le topic Mqtt approprié. */
+  socket.on('cmd_ValveGB',        function (val) {
+    client.publish('RAM/panneau/cmd/ValveGB',          val,   {retain: true});
+    panneau.ValveGB   = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ValvePB',        function (val) {
+    client.publish('RAM/panneau/cmd/ValvePB',          val,   {retain: true});
+    panneau.ValvePB   = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ValveEC',        function (val) {
+    client.publish('RAM/panneau/cmd/ValveEC',          val,   {retain: true});
+    panneau.ValveEC   = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ValveEF',        function (val) {
+    client.publish('RAM/panneau/cmd/ValveEF',          val,   {retain: true});
+    panneau.ValveEF   = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ConsNivGB',      function (val) {
+    client.publish('RAM/panneau/cmd/ConsNivGB',        val,   {retain: true});
+    panneau.ConsNivGB = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ConsNivPB',      function (val) {
+    client.publish('RAM/panneau/cmd/ConsNivPB',        val,   {retain: true});
+    panneau.ConsNivPB = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ConsTmpPB',      function (val) {
+    client.publish('RAM/panneau/cmd/ConsTmpPb',        val,   {retain: true});
+    panneau.ConsTmpPB = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ValveEEC',       function (val) {
+    client.publish('RAM/panneau/cmd/ValveEEC',         val,   {retain: true});
+    panneau.ValveEEC  = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_ValveEEF',       function (val) {
+    client.publish('RAM/panneau/cmd/ValveEEF',         val,   {retain: true});
+    panneau.ValveEEF  = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_Mode_pan',       function (val) {
+    client.publish('RAM/panneau/cmd/Mode',             val,   {retain: true});
+    panneau.Mode      = val;
+    ignoreMqttFlag = true;
+  });
+  socket.on('cmd_Pompe',          function (val) {
+    client.publish('RAM/panneau/cmd/Pompe',            val,   {retain: true});
+    panneau.Pompe     = val;
+    ignoreMqttFlag = true;
+  });
 });
 
 
